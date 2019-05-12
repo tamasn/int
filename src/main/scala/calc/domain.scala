@@ -8,41 +8,50 @@ object domain {
   sealed trait TokenType {
     type Data
 
-    def unapply(t: Token): Option[Data] = if (t.tt != this) Some(t.token.asInstanceOf[Data]) else None
+    def token(v: Data): Token.Aux[Data]
+
+    def unapply(t: Token): Option[Data] = if (t.tt == this) Some(t.token.asInstanceOf[Data]) else None
   }
 
   object TokenType {
-    case object Integer extends TokenType {
-      type Data = Int
+    type Aux[A] = TokenType { type Data = A }
+
+    def instance[A]: Aux[A] = new TokenType { self =>
+      type Data = A
+      override def token(v: Data): Token.Aux[Data] = Token.instance[A](self, v)
     }
-    case object Plus extends TokenType {
-      type Data = Unit
-    }
-    case object Eof extends TokenType {
-      type Data = Unit
-    }
+    val integer = instance[Int]
+
+    val plus = instance[Unit]
+
+    val eof = instance[Unit]
   }
 
   sealed abstract class Token {
+    type Data
     val tt: TokenType
-    def token: tt.Data
+    def token: Data
   }
 
   object Token {
-    def instance[A](tpe: TokenType { type Data = A }, v: A): Token = new Token {
+
+    type Aux[A] = Token { type Data = A }
+
+    def instance[A](tpe: TokenType { type Data = A }, v: A): Aux[A] = new Token {
+      type Data = A
       val tt = tpe
       val token = v
     }
-
-    def integer(x: Int) = instance(TokenType.Integer, x)
-    val plus = instance(TokenType.Plus, ())
-    val eof = instance(TokenType.Eof, ())
   }
 
-  implicit def tokenShow: Show[Token] = Show.show {
-    case TokenType.Integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"
-    case TokenType.Plus(_)    => s"Token(PLUS, '+')"
-    case TokenType.Eof(_)     => s"Token(EOF, ())"
+  def integer(x: Int): Token.Aux[Int] = TokenType.integer.token(x)
+  val plus: Token.Aux[Unit] = TokenType.plus.token(())
+  val eof: Token.Aux[Unit] = TokenType.eof.token(())
+
+  implicit def tokenShow(): Show[Token] = Show.show {
+    case TokenType.integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"
+    case TokenType.plus(_)    => s"Token(PLUS, '+')"
+    case TokenType.eof(_)     => s"Token(EOF, ())"
   }
 
   object Digit {

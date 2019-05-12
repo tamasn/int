@@ -19,25 +19,26 @@ object service {
 
     private def getNextToken0: Tokenizer[Token] =
       EitherT(State {
-        case Nil                   => resp(Nil, Token.eof)
-        case p :: rest if p == '+' => resp(rest, Token.plus)
-        case Digit(v) :: rest      => resp(rest, Token.integer(v))
+        case Nil                   => resp(Nil, TokenType.eof.token(()))
+        case p :: rest if p == '+' => resp(rest, TokenType.plus.token(()))
+        case Digit(v) :: rest      => resp(rest, TokenType.integer.token(v))
         case _                     => (Nil, fail)
       })
 
-    def getNextToken(expectedType: TokenType): Tokenizer[expectedType.Data] =
+    def getNextToken[A](expectedType: TokenType.Aux[A]): Tokenizer[A] =
       for {
         token <- getNextToken0
-        v <- if (token.tt == expectedType)
-          EitherT.right[String](State.pure[List[Char], expectedType.Data](token.token.asInstanceOf[expectedType.Data]))
-        else failM()
+        v <- token match {
+          case expectedType(x) => EitherT.right[String](State.inspect[List[Char], A](_ => x))
+          case _               => failM
+        }
       } yield v
 
     def expr: Tokenizer[Int] =
       for {
-        left <- getNextToken(TokenType.Integer)
-        _ <- getNextToken(TokenType.Plus)
-        right <- getNextToken(TokenType.Integer)
+        left <- getNextToken(TokenType.integer)
+        _ <- getNextToken(TokenType.plus)
+        right <- getNextToken(TokenType.integer)
       } yield (left + right)
   }
 }
