@@ -71,12 +71,12 @@ object domain {
     def integer(x: Int): Token.Aux[Int] = TokenType.integer.token(x)
     def op(x: Op): Token.Aux[Op] = TokenType.op.token(x)
     val eof: Token.Aux[Unit] = TokenType.eof.token(())
-  }
 
-  implicit def tokenShow(): Show[Token] = Show.show {
-    case TokenType.integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"
-    case TokenType.op(c)      => s"Token(OP, '${Show[Op].show(c)}')"
-    case TokenType.eof(_)     => s"Token(EOF, ())"
+    implicit def tokenShow[A]: Show[Token.Aux[A]] = Show.show {
+      case TokenType.integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"
+      case TokenType.op(c)      => s"Token(OP, '${Show[Op].show(c)}')"
+      case TokenType.eof(_)     => s"Token(EOF, ())"
+    }
   }
 
   object Digit {
