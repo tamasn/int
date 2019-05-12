@@ -9,17 +9,26 @@ class InterpreterSpec extends FlatSpec with Matchers {
   }
 
   val tests: List[(String, Int)] =
-    List("3+4" -> 7, "3+5" -> 8, "3+9" -> 12, "4-2" -> 2, "12+24" -> 36, "572 - 210 " -> 362)
+    List(
+      "3+4" -> 7,
+      "3+5" -> 8,
+      "3+9" -> 12,
+      "4-2" -> 2,
+      "12+24" -> 36,
+      "572 - 210 " -> 362,
+      "2 * 3" -> 6,
+      "3 / 2" -> 1
+    )
 
   tests.map {
     case (pat, res) =>
-      it should s"calculate that $pat=$res" in {
+      it should s"calculate that $pat = $res" in {
         Interpreter.expr.value.runA(pat.toList).value shouldBe Right(res)
       }
 
   }
 
-  it should "fail on 4*2" in {
-    Interpreter.expr.value.runA("4*2".toList).value shouldBe Interpreter.fail[Int]
+  it should "fail on 4a2" in {
+    Interpreter.expr.value.runA("4a2".toList).value shouldBe Interpreter.fail[Int]
   }
 }

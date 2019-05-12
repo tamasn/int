@@ -13,6 +13,8 @@ object domain {
     def unapply(c: Char): Option[Op] = c match {
       case '+' => Some(Plus)
       case '-' => Some(Minus)
+      case '*' => Some(Multiple)
+      case '/' => Some(Divide)
       case _   => None
     }
     final case object Plus extends Op {
@@ -23,9 +25,19 @@ object domain {
       override val ap = _ - _
     }
 
+    final case object Multiple extends Op {
+      override val ap = _ * _
+    }
+
+    final case object Divide extends Op {
+      override val ap = _ / _
+    }
+
     implicit val showOp: Show[Op] = Show.show {
-      case Plus  => "+"
-      case Minus => "-"
+      case Plus     => "+"
+      case Minus    => "-"
+      case Multiple => "*"
+      case Divide   => "/"
     }
 
   }
