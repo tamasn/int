@@ -23,15 +23,23 @@ object service {
         (xs, acc.zipWithIndex.map({ case (digit, pos) => math.pow(10, pos.toDouble) * digit }).sum.toInt)
     }
 
+    private def skipWhitespaces(txt: List[Char]): List[Char] = txt match {
+      case ' ' :: rest => skipWhitespaces(rest)
+      case xs          => xs
+    }
+
     private def getNextToken0: Tokenizer[Token] =
-      EitherT(State {
-        case Nil           => resp(Nil, Token.eof)
-        case Op(o) :: rest => resp(rest, Token.op(o))
-        case Digit(v) :: rest =>
-          val (rest0, i) = getDigits(rest, List(v))
-          resp(rest0, Token.integer(i))
-        case _ => (Nil, fail)
-      })
+      EitherT(for {
+        _ <- State.modify(skipWhitespaces)
+        t <- State[List[Char], Either[String, Token]] {
+          case Nil           => resp(Nil, Token.eof)
+          case Op(o) :: rest => resp(rest, Token.op(o))
+          case Digit(v) :: rest =>
+            val (rest0, i) = getDigits(rest, List(v))
+            resp(rest0, Token.integer(i))
+          case _ => (Nil, fail)
+        }
+      } yield t)
 
     def getNextToken[A](expectedType: TokenType.Aux[A]): Tokenizer[A] =
       for {

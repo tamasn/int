@@ -9,7 +9,7 @@ class InterpreterSpec extends FlatSpec with Matchers {
   }
 
   val tests: List[(String, Int)] =
-    List("3+4" -> 7, "3+5" -> 8, "3+9" -> 12, "4-2" -> 2, "12+24" -> 36, "572-210" -> 362)
+    List("3+4" -> 7, "3+5" -> 8, "3+9" -> 12, "4-2" -> 2, "12+24" -> 36, "572 - 210 " -> 362)
 
   tests.map {
     case (pat, res) =>
