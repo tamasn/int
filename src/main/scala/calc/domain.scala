@@ -42,11 +42,11 @@ object domain {
       val tt = tpe
       val token = v
     }
-  }
 
-  def integer(x: Int): Token.Aux[Int] = TokenType.integer.token(x)
-  val plus: Token.Aux[Unit] = TokenType.plus.token(())
-  val eof: Token.Aux[Unit] = TokenType.eof.token(())
+    def integer(x: Int): Token.Aux[Int] = TokenType.integer.token(x)
+    val plus: Token.Aux[Unit] = TokenType.plus.token(())
+    val eof: Token.Aux[Unit] = TokenType.eof.token(())
+  }
 
   implicit def tokenShow(): Show[Token] = Show.show {
     case TokenType.integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"

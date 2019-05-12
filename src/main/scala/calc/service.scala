@@ -19,9 +19,9 @@ object service {
 
     private def getNextToken0: Tokenizer[Token] =
       EitherT(State {
-        case Nil                   => resp(Nil, TokenType.eof.token(()))
-        case p :: rest if p == '+' => resp(rest, TokenType.plus.token(()))
-        case Digit(v) :: rest      => resp(rest, TokenType.integer.token(v))
+        case Nil                   => resp(Nil, Token.eof)
+        case p :: rest if p == '+' => resp(rest, Token.plus)
+        case Digit(v) :: rest      => resp(rest, Token.integer(v))
         case _                     => (Nil, fail)
       })
 
