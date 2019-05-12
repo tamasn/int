@@ -5,6 +5,31 @@ import cats.instances.int._
 
 object domain {
 
+  sealed trait Op {
+    def ap: (Int, Int) => Int
+  }
+
+  object Op {
+    def unapply(c: Char): Option[Op] = c match {
+      case '+' => Some(Plus)
+      case '-' => Some(Minus)
+      case _   => None
+    }
+    final case object Plus extends Op {
+      override val ap = _ + _
+    }
+
+    final case object Minus extends Op {
+      override val ap = _ - _
+    }
+
+    implicit val showOp: Show[Op] = Show.show {
+      case Plus  => "+"
+      case Minus => "-"
+    }
+
+  }
+
   sealed trait TokenType {
     type Data
 
@@ -22,7 +47,7 @@ object domain {
     }
     val integer = instance[Int]
 
-    val plus = instance[Unit]
+    val op = instance[Op]
 
     val eof = instance[Unit]
   }
@@ -44,13 +69,13 @@ object domain {
     }
 
     def integer(x: Int): Token.Aux[Int] = TokenType.integer.token(x)
-    val plus: Token.Aux[Unit] = TokenType.plus.token(())
+    def op(x: Op): Token.Aux[Op] = TokenType.op.token(x)
     val eof: Token.Aux[Unit] = TokenType.eof.token(())
   }
 
   implicit def tokenShow(): Show[Token] = Show.show {
     case TokenType.integer(x) => s"Token(INTEGER, ${Show[Int].show(x)})"
-    case TokenType.plus(_)    => s"Token(PLUS, '+')"
+    case TokenType.op(c)      => s"Token(OP, '${Show[Op].show(c)}')"
     case TokenType.eof(_)     => s"Token(EOF, ())"
   }
 
