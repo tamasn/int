@@ -5,7 +5,7 @@ import service._
 
 class InterpreterSpec extends FlatSpec with Matchers {
   "Interpreter" should "solve that 4+5=9" in {
-    Interpreter.expr.value.runA("4+5".toList).value shouldBe Right(9)
+    Interpreter.run("4+5") shouldBe Right(9)
   }
 
   val tests: List[(String, Int)] =
@@ -17,18 +17,21 @@ class InterpreterSpec extends FlatSpec with Matchers {
       "12+24" -> 36,
       "572 - 210 " -> 362,
       "2 * 3" -> 6,
-      "3 / 2" -> 1
+      "3 / 2" -> 1,
+      "2 + 3 + 5" -> 10,
+      "2 + 3 * 5" -> 17,
+      "2 * 3 + 5" -> 16
     )
 
   tests.map {
     case (pat, res) =>
       it should s"calculate that $pat = $res" in {
-        Interpreter.expr.value.runA(pat.toList).value shouldBe Right(res)
+        Interpreter.run(pat) shouldBe Right(res)
       }
 
   }
 
   it should "fail on 4a2" in {
-    Interpreter.expr.value.runA("4a2".toList).value shouldBe Interpreter.fail[Int]
+    Interpreter.run("4a2") shouldBe Tokenizer.fail[Int]
   }
 }

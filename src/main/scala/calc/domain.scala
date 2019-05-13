@@ -2,8 +2,66 @@ package calc
 
 import cats.Show
 import cats.instances.int._
+import cats.FlatMap
+import cats.syntax.functor._
+import cats.syntax.flatMap._
+import scala.annotation.tailrec
 
 object domain {
+  sealed trait Expr
+
+  object Expr {
+    sealed private trait Tr[A]
+    private object Tr {
+      case class D[A](x: A) extends Tr[A]
+      case class M[A](r: () => Tr[A]) extends Tr[A]
+
+      implicit val trFlatMap: FlatMap[Tr] = new FlatMap[Tr] {
+        override def map[A, B](fa: Tr[A])(f: A => B): Tr[B] = fa match {
+          case D(x) => D(f(x))
+          case M(r) => M(() => map(r())(f))
+        }
+
+        override def flatMap[A, B](fa: Tr[A])(f: A => Tr[B]): Tr[B] = fa match {
+          case D(x) => f(x)
+          case M(r) => M(() => f(interpret(r())))
+        }
+
+        @tailrec
+        override def tailRecM[A, B](a: A)(f: A => Tr[Either[A, B]]): Tr[B] = f(a) match {
+          case D(Right(x)) => D(x)
+          case D(Left(x))  => tailRecM(x)(f)
+          case M(r) =>
+            interpret(r()) match {
+              case Left(x)  => tailRecM(x)(f)
+              case Right(x) => D(x)
+            }
+        }
+      }
+
+      @tailrec
+      def interpret[A](tr: Tr[A]): A = tr match {
+        case D(x) => x
+        case M(r) => interpret(r())
+      }
+    }
+
+    final case class Number(x: Int) extends Expr
+    final case class Combined(op: Op, x: Expr, y: Expr) extends Expr
+
+    private def evaluate0(e: Expr): Tr[Int] = e match {
+      case Number(x) => Tr.D(x)
+      case Combined(op, x, y) =>
+        Tr.M(() => {
+          for {
+            x0 <- evaluate0(x)
+            y0 <- evaluate0(y)
+          } yield op.ap(x0, y0)
+        })
+    }
+
+    def evaluate(e: Expr): Int = Tr.interpret(evaluate0(e))
+  }
 
   sealed trait Op {
     def ap: (Int, Int) => Int
@@ -71,7 +129,6 @@ object domain {
   }
 
   object Token {
-
     type Aux[A] = Token { type Data = A }
 
     def instance[A](tpe: TokenType { type Data = A }, v: A): Aux[A] = new Token {
